@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Menu UI Layout: Burger Snipe (jQuery)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="./css/order.css">
+</head>
+
+<body class="p-6 bg-orange-50">
+  <div class="flex gap-6">
+
+    <!-- Menu -->
+    <div class="w-3/4 border border-orange-300 rounded-lg p-6 max-h-screen overflow-y-auto bg-white">
+      <h2 class="text-xl font-bold mb-4 text-orange-700" style="font-size: 35px;">Menu: Burger Snipe</h2>
+      <input type="text" id="search" placeholder="Search menu..." class="mb-4 p-2 border border-orange-300 rounded w-full">
+      <div class="grid grid-cols-4 gap-6" id="menu"></div>
+    </div>
+
+    <!-- Order Details -->
+    <div class="w-1/4 border border-orange-300 rounded-lg flex flex-col max-h-screen overflow-y-auto bg-white">
+      <div>
+        <h3 class="text-xl font-bold border-b border-orange-300 p-5 mb-12 text-orange-700" style="font-size: 35px;">Ordered Items</h3>
+        <div id="orders" class="p-5"></div>
+      </div>
+      <div class="mt-6 pt-4 border-t border-orange-300 w-full p-5">
+        <p id="total" class="font-bold mb-2 text-orange-800" style="font-size: 35px;">Total: 0 PHP</p>
+        <input id="payment" type="number" placeholder="Enter the amount here" class="w-full mb-2 p-2 border border-orange-300 rounded">
+        <div style="text-align: right;">
+          <button id="pay" class="bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded w-30 font-bold">Pay!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+  <div id="receipt" class="hidden fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
+    <div class="bg-white p-6 rounded-lg w-[400px] text-center">
+      <h2 class="text-2xl font-bold mb-4 text-orange-700">Receipt</h2>
+      <div id="receipt-details" class="text-left mb-4"></div>
+      <button id="close-receipt" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-bold">Close</button>
+    </div>
+  </div>
+
+  <script>
+    const items = [
+      { name: 'Cheese Burger', price: 259, image: 'resources/cheeseburger.png' },
+      { name: 'Truffle Burger', price: 289, image: 'resources/truffle-burger.png' },
+      { name: 'Black Bean Burger', price: 279, image: 'resources/black-bean-burger.png' },
+      { name: 'Bacon Burger', price: 239, image: 'resources/bacon burger.png' },
+      { name: 'Wagyu Beef Burger', price: 269, image: 'resources/wagyu beef burger.png' },
+      { name: 'Mushroom Melt Burger', price: 219, image: 'resources/mushroom melt.png' },
+      { name: 'Double Patty Burger', price: 309, image: 'resources/double patty.png' },
+      { name: 'Brie Bliss Burger', price: 329, image: 'resources/brie bliss burger.png' },
+      { name: 'Lentil Patty Burger', price: 229, image: 'resources/lentil patty.png' }
+    ];
+
+    let orders = {};
+
+    function renderMenu(filteredItems = items) {
+      $('#menu').empty();
+      $.each(filteredItems, function (i, item) {
+        const menuItem = $(`
+          <div class="border border-orange-300 rounded-lg p-4 text-center bg-white shadow-sm">
+            <div class="flex justify-center items-center h-[150px] overflow-hidden mb-2">
+              <img src="${item.image}" alt="${item.name}" class="h-full object-cover rounded-md">
+            </div>
+            <h3 class="text-lg font-bold mt-2 text-orange-800">${item.name}</h3>
+            <p class="text-orange-600">${item.price} PHP</p>
+            <input type="number" min="1" class="qty w-full mt-2 p-1 border border-orange-300 rounded" placeholder="Enter how many?">
+            <button class="add bg-orange-500 hover:bg-orange-600 text-white mt-2 py-1 rounded font-bold flex items-center justify-center gap-2" style="width: 125px; height: 40px; float: right;">
+                <img src="resources/cart-regular-24-w.png" class="h-5 w-5" alt="Cart">
+                Add to cart
+            </button>
+          </div>
+        `);
+
+        menuItem.find('.add').on('click', function () {
+          const qty = parseInt(menuItem.find('.qty').val());
+          if (!qty || qty < 1) return;
+
+          if (!orders[item.name]) orders[item.name] = 0;
+          orders[item.name] += qty;
+
+          updateOrders();
+        });
+
+        $('#menu').append(menuItem);
+      });
+    }
+
+    function updateOrders() {
+      $('#orders').empty();
+      let total = 0;
+
+      $.each(orders, function (name, qty) {
+        const item = items.find(i => i.name === name);
+        const itemTotal = item.price * qty;
+        total += itemTotal;
+
+        $('#orders').append(`
+          <div class="border border-orange-300 rounded-md p-4 mb-4 bg-orange-100">
+            <h2 style="font-size: 30px;" class="text-orange-800">${name}</h2>
+            <div class="flex justify-end">
+              <p class="text-orange-700" style="font-size: 30px;">Qty: ${qty}</p>
+            </div>
+          </div>
+        `);
+      });
+
+      $('#total').text(`Total: ${total} PHP`);
+    }
+
+    $('#search').on('input', function () {
+      const query = $(this).val().toLowerCase();
+      const filtered = items.filter(item => item.name.toLowerCase().startsWith(query));
+      renderMenu(filtered);
+    });
+
+    $('#pay').on('click', function () {
+      const payment = parseFloat($('#payment').val());
+      let total = 0;
+
+      $.each(orders, function (name, qty) {
+        const item = items.find(i => i.name === name);
+        total += item.price * qty;
+      });
+
+      if (payment >= total) {
+        const change = payment - total;
+
+        let receiptHTML = '';
+        $.each(orders, function (name, qty) {
+          const item = items.find(i => i.name === name);
+          receiptHTML += `<p>${qty} x ${name} - ${item.price * qty} PHP</p>`;
+        });
+        receiptHTML += `<hr class="my-2"><p><strong>Total:</strong> ${total} PHP</p>`;
+        receiptHTML += `<p><strong>Payment:</strong> ${payment} PHP</p>`;
+        receiptHTML += `<p><strong>Change:</strong> ${change.toFixed(2)} PHP</p>`;
+
+        $('#receipt-details').html(receiptHTML);
+        $('#receipt').removeClass('hidden');
+
+        orders = {};
+        updateOrders();
+        $('#payment').val('');
+      } else {
+        alert('Not enough balance. Please try again');
+      }
+    });
+
+    $('#close-receipt').on('click', function () {
+      $('#receipt').addClass('hidden');
+    });
+
+    $(document).ready(function () {
+      renderMenu();
+    });
+  </script>
+</body>
+</html>
