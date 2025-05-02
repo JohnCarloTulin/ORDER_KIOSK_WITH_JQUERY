@@ -1,41 +1,59 @@
+<!-- 
+  This is the main HTML layout for a burger kiosk for Burger Snipe.
+  It uses Tailwind CSS for styling and jQuery for handling interactions.
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Menu UI Layout: Burger Snipe (jQuery)</title>
+
+  <!-- Tailwind CSS for utility-first styling -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- jQuery for DOM manipulation and event handling -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+  <!-- External custom styles -->
   <link rel="stylesheet" href="./css/order.css">
 </head>
 
 <body class="p-6 bg-orange-50">
   <div class="flex gap-6">
 
-    <!-- Menu -->
+    <!-- Left Section: Menu List -->
     <div class="w-3/4 border border-orange-300 rounded-lg p-6 max-h-screen overflow-y-auto bg-white">
       <h2 class="text-xl font-bold mb-4 text-orange-700" style="font-size: 35px;">Menu: Burger Snipe</h2>
+
+      <!-- Menu search input -->
       <input type="text" id="search" placeholder="Search menu..." class="mb-4 p-2 border border-orange-300 rounded w-full">
+
+      <!-- Menu items will be dynamically inserted here -->
       <div class="grid grid-cols-4 gap-6" id="menu"></div>
     </div>
 
-    <!-- Order Details -->
+    <!-- Right Section: Order summary and payment -->
     <div class="w-1/4 border border-orange-300 rounded-lg flex flex-col max-h-screen overflow-y-auto bg-white">
       <div>
         <h3 class="text-xl font-bold border-b border-orange-300 p-5 mb-12 text-orange-700" style="font-size: 35px;">Ordered Items</h3>
         <div id="orders" class="p-5"></div>
       </div>
+
+      <!-- Total and payment input -->
       <div class="mt-6 pt-4 border-t border-orange-300 w-full p-5">
         <p id="total" class="font-bold mb-2 text-orange-800" style="font-size: 35px;">Total: 0 PHP</p>
         <input id="payment" type="number" placeholder="Enter the amount here" class="w-full mb-2 p-2 border border-orange-300 rounded">
         <div style="text-align: right;">
+          <!-- Button to do payment -->
           <button id="pay" class="bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded w-30 font-bold">Pay!</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Receipt Modal -->
+  <!-- Modal that shows up after successful payment -->
   <div id="receipt" class="hidden fixed top-0 left-0 w-full h-full flex items-center justify-center bg-black bg-opacity-50">
     <div class="bg-white p-6 rounded-lg w-[400px] text-center">
       <h2 class="text-2xl font-bold mb-4 text-orange-700">Receipt</h2>
@@ -44,7 +62,9 @@
     </div>
   </div>
 
+  <!-- JavaScript functionality begins here -->
   <script>
+    // Menu items with name, price, and image
     const items = [
       { name: 'Cheese Burger', price: 259, image: 'resources/cheeseburger.png' },
       { name: 'Truffle Burger', price: 289, image: 'resources/truffle-burger.png' },
@@ -57,10 +77,12 @@
       { name: 'Lentil Patty Burger', price: 229, image: 'resources/lentil patty.png' }
     ];
 
-    let orders = {};
+    let orders = {}; // This will store items added to the cart
 
+    // Render the menu items to the page
     function renderMenu(filteredItems = items) {
-      $('#menu').empty();
+      $('#menu').empty(); // Clear current menu display
+
       $.each(filteredItems, function (i, item) {
         const menuItem = $(`
           <div class="border border-orange-300 rounded-lg p-4 text-center bg-white shadow-sm">
@@ -77,10 +99,12 @@
           </div>
         `);
 
+        // When "Add to cart" is clicked
         menuItem.find('.add').on('click', function () {
           const qty = parseInt(menuItem.find('.qty').val());
           if (!qty || qty < 1) return;
 
+          // Keep track of order quantity
           if (!orders[item.name]) orders[item.name] = 0;
           orders[item.name] += qty;
 
@@ -91,6 +115,7 @@
       });
     }
 
+    // Updates the order summary in the sidebar
     function updateOrders() {
       $('#orders').empty();
       let total = 0;
@@ -113,12 +138,14 @@
       $('#total').text(`Total: ${total} PHP`);
     }
 
+    // Filter menu items as user types
     $('#search').on('input', function () {
       const query = $(this).val().toLowerCase();
       const filtered = items.filter(item => item.name.toLowerCase().startsWith(query));
       renderMenu(filtered);
     });
 
+    // Handle payment process
     $('#pay').on('click', function () {
       const payment = parseFloat($('#payment').val());
       let total = 0;
@@ -131,6 +158,7 @@
       if (payment >= total) {
         const change = payment - total;
 
+        // Build the receipt content
         let receiptHTML = '';
         $.each(orders, function (name, qty) {
           const item = items.find(i => i.name === name);
@@ -143,6 +171,7 @@
         $('#receipt-details').html(receiptHTML);
         $('#receipt').removeClass('hidden');
 
+        // Reset orders and input after successful payment
         orders = {};
         updateOrders();
         $('#payment').val('');
@@ -151,10 +180,12 @@
       }
     });
 
+    // Close the receipt modal
     $('#close-receipt').on('click', function () {
       $('#receipt').addClass('hidden');
     });
 
+    // Initialize menu on page load
     $(document).ready(function () {
       renderMenu();
     });
